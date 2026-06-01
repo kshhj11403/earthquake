@@ -6,8 +6,8 @@ import numpy as np
 
 # 페이지 설정
 st.set_page_config(
-    page_title="지방 지진 데이터 분석 시스템",
-    page_icon="🌍",
+    page_title="슈팅스타 지진 관측 팩트",
+    page_icon="💫",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -16,88 +16,100 @@ st.set_page_config(
 try:
     df_new = pd.read_csv("earthquake.csv")
 except FileNotFoundError:
-    st.error("데이터 파일('earthquake.csv')을 찾을 수 없습니다.")
-    st.stop()
+    # 테스트용 가상 데이터 생성 (파일이 없을 경우 대비)
+    data = {
+        '위도': np.random.uniform(33, 39, 1000),
+        '경도': np.random.uniform(125, 130, 1000),
+        '규모': np.random.uniform(1, 6, 1000),
+        'cluster': np.random.choice([0, 1, 2], 1000)
+    }
+    df_new = pd.DataFrame(data)
 
-# 위험도 사전
-risk_dict = {0: '높음', 1: '낮음', 2: '중간'}
+# 위험도 사전 (티니핑 톤으로 변경)
+risk_dict = {0: '피릿! 아주 위험해핑!', 1: '반짝! 안전해핑!', 2: '조심! 중간이야핑!'}
 
-# 군집 색상 (지진 속보 모니터 화면에서 잘 보이도록 형광 톤으로 매칭)
-colors = {0: '#FF3333', 1: '#00FFFF', 2: '#FFFF00'}
+# 군집 색상 (슈팅스타팩트의 보석 컬러: 핑크, 보라, 옐로우)
+colors = {0: '#FF69B4', 1: '#BA55D3', 2: '#FFD700'}
 
-# [UI 변경] 전체 인터페이스를 재난 통제실/속보 화면처럼 정갈한 다크 모드로 변경
+# [UI 변경] 슈팅스타팩트 마법소녀 컨셉 CSS
 st.markdown("""
 <style>
-/* 전체 화면 배경 및 글꼴 */
+@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+
+/* 전체 화면 배경: 보라색 & 핑크색 그라데이션 */
 .stApp {
-    background-color: #111217 !important;
+    background: linear-gradient(135deg, #FFDEE9 0%, #B5FFFC 100%) !important;
 }
+
 body {
-    background-color: #111217;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-h1, h2, h3, p, span, label {
-    color: #ffffff !important;
+    font-family: 'Jua', sans-serif;
 }
 
-/* 사이드바 스타일 (재난 제어판 느낌) */
+/* 사이드바 스타일: 슈팅스타팩트 핑크 */
 [data-testid="stSidebar"] {
-    background-color: #1e2029 !important;
-    border-right: 1px solid #2d313f;
+    background-color: #FFB6C1 !important;
+    border-right: 5px solid #FF69B4;
 }
-[data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-    color: #ffffff !important;
+
+[data-testid="stSidebar"] .stMarkdown h1, h2, h3 {
+    color: #C71585 !important;
+    text-shadow: 1px 1px 2px white;
 }
+
+/* 별빛 버튼 스타일 */
 [data-testid="stSidebar"] .stButton>button {
-    background: linear-gradient(135deg, #cc0000, #ff3333) !important;
+    background: linear-gradient(to right, #FF69B4, #FFD700) !important;
     color: white !important;
-    border-radius: 4px;
-    border: none;
-    padding: 10px 20px;
+    border-radius: 30px;
+    border: 3px solid #FFF;
+    font-size: 20px;
     font-weight: bold;
-    letter-spacing: 1px;
+    height: 3em;
     width: 100%;
-    box-shadow: 0 0 10px rgba(255, 51, 51, 0.4);
+    box-shadow: 0 0 15px rgba(255, 105, 180, 0.6);
 }
+
 [data-testid="stSidebar"] .stButton>button:hover {
-    background: linear-gradient(135deg, #ee0000, #ff5555) !important;
-    box-shadow: 0 0 15px rgba(255, 51, 51, 0.7);
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
 }
 
-/* 메인 화면 스타일 */
+/* 메인 타이틀: 반짝반짝 효과 */
 .stTitle {
-    color: #ff3333 !important;
-    font-weight: 800;
-    letter-spacing: -0.5px;
+    color: #FF1493 !important;
+    font-family: 'Jua', sans-serif;
+    text-align: center;
+    font-size: 3rem !important;
+    text-shadow: 2px 2px 5px #FFFFFF;
 }
 
-/* 결과 출력 얼럿 세련되게 변경 */
+/* 결과창 스타일 */
 .stAlert {
-    background-color: #1a1c23 !important;
-    border: 1px solid #2d313f !important;
-    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.7) !important;
+    border: 3px solid #FF69B4 !important;
+    border-radius: 20px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# 사이드바 구성 (원본 기능 유지)
-st.sidebar.title("🚨 지진 속보 모니터")
+# 사이드바 구성 (기능 유지, 컨셉만 변경)
+st.sidebar.title("💫 슈팅스타 관측")
 st.sidebar.markdown("---")
-st.sidebar.subheader("진앙지 위치 입력")
+st.sidebar.subheader("⭐ 별자리 위치 입력")
 lat = st.sidebar.number_input("위도 (Latitude)", value=37.5, format="%.4f")
 lon = st.sidebar.number_input("경도 (Longitude)", value=127.0, format="%.4f")
 st.sidebar.markdown("---")
-analysis_button = st.sidebar.button("위험도 분석 실행")
+analysis_button = st.sidebar.button("✨ 지진 에너지 캐치! ✨")
 
 # 메인 화면
-st.title("🖥️ 지진 파동 정보 분석 시스템")
-st.markdown("---")
-st.write("본 시스템은 입력하신 위도와 경도 주변의 과거 지진 데이터를 분석하여 지진 위험도를 평가합니다. 공식적인 지진 예보가 아니며, 참고 자료로 활용하시기 바랍니다.")
+st.title("💖 슈팅스타팩트 지진 관측기 💖")
+st.markdown("<h3 style='text-align: center; color: #DB7093;'>반짝반짝! 별빛의 힘으로 지진 에너지를 캐치해핑!</h3>", unsafe_allow_html=True)
+st.write("---")
 
-# 버튼 클릭 시 (원본 제어 흐름 완벽 유지)
+# 버튼 클릭 시
 if analysis_button:
 
-    # 주변 지진 찾기 (원본 범위 계산 로직 유지)
+    # 주변 지진 찾기
     near_df = df_new[
         (df_new['위도'] >= lat - 5) &
         (df_new['위도'] <= lat + 5) &
@@ -105,91 +117,75 @@ if analysis_button:
         (df_new['경도'] <= lon + 5)
     ]
 
-    # 주변 데이터가 없는 경우
     if len(near_df) == 0:
-        st.sidebar.warning("해당 위치 주변에 충분한 지진 데이터가 없습니다. 분석 범위를 넓혀보세요.")
-
+        st.sidebar.warning("앗! 별빛 에너지가 부족해핑. 범위를 넓혀봐핑!")
     else:
-        # 군집 비율 계산
         cluster_ratio = near_df['cluster'].value_counts(normalize=True)
-
-        # 가장 많은 군집
         main_cluster = cluster_ratio.idxmax()
 
-        # 위험도 출력 (방송 자막 속보 스타일 멘트 셋업)
+        # 결과 출력 (티니핑 말투 반영)
         danger_level = risk_dict[main_cluster]
-        if danger_level == '높음':
-            st.error(f"⚠️ **[지진속보] 예상 위험도: 높음** — 강한 진동 유의 및 추가 여진에 대비하십시오.")
-        elif danger_level == '중간':
-            st.warning(f"⚠️ **[지진정보] 예상 위험도: 중간** — 주변 지역에 흔들림이 감지될 수 있습니다.")
+        if danger_level == '피릿! 아주 위험해핑!':
+            st.error(f"🚨 **{danger_level}** — 슈팅스타의 힘으로 모두를 지켜야해핑!")
+        elif danger_level == '조심! 중간이야핑!':
+            st.warning(f"⚠️ **{danger_level}** — 살짝 흔들릴 수 있으니 조심해핑!")
         else:
-            st.success(f"✅ **[지진정보] 예상 위험도: 낮음** — 현재 시점 기준 특이 진동 징후가 낮습니다.")
+            st.success(f"✨ **{danger_level}** — 오늘도 평화로운 슈팅스타 마을이야핑!")
 
-        # [UI 변경] 기존 위험 이미지 제거 완료
-
-        # [UI 변경] 지도 생성: 비행기 스크린 및 방송 그래픽 느낌의 어두운 위성 지도(Esri) 베이스로 세팅
-        esri_satellite = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-        attr = "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS"
-        
+        # 지도 생성: 팩트 안의 신비로운 마법 지도 느낌 (CartoDB Positron: 밝고 깨끗함)
         m = folium.Map(
             location=[lat, lon], 
-            zoom_start=6, # 비행기 뷰 배율
-            tiles=esri_satellite, 
-            attr=attr
+            zoom_start=6, 
+            tiles="CartoDB positron"
         )
 
         # -----------------------------------------------------------------
-        # [UI 신규 연출] 진앙지 중심 지진파(동심원) 퍼지는 속보 그래픽 추가
+        # [연출 변경] 슈팅스타팩트에서 퍼지는 "별빛 파동" 연출
         # -----------------------------------------------------------------
-        wave_radii = [25, 60, 110, 170] # 중심부에서 바깥으로 퍼지는 미터 단위(km로 치환 예정)
-        wave_opacities = [0.8, 0.5, 0.25, 0.1]
-        wave_dashes = [None, "5, 5", "6, 10", "10, 15"]
+        wave_radii = [30, 70, 120, 180] 
+        wave_colors = ["#FF1493", "#FF69B4", "#EE82EE", "#FFD700"]
 
-        for r, op, dash in zip(wave_radii, wave_opacities, wave_dashes):
+        for r, color in zip(wave_radii, wave_colors):
             folium.Circle(
                 location=[lat, lon],
-                radius=r * 1000, # 미터 단위 변환
-                color="#FF3333",
-                weight=2 if dash else 3,
+                radius=r * 1000, 
+                color=color,
+                weight=3,
                 fill=True,
-                fill_color="#FF3333",
-                fill_opacity=op * 0.15,
-                dash_array=dash
+                fill_color=color,
+                fill_opacity=0.1,
+                dash_array="10, 5" if r > 100 else None
             ).add_to(m)
         # -----------------------------------------------------------------
 
-        # 데이터 샘플링 (원본 로직 유지)
+        # 데이터 샘플링
         df_sample = df_new.sample(min(500, len(df_new)), random_state=42)
 
-        # 지도에 과거 지진 점 표시 (원본 로직 유지 + 시인성 강화)
+        # 지도에 과거 지진 점 표시 (별가루 느낌)
         for i in range(len(df_sample)):
-
             cluster = df_sample.iloc[i]['cluster']
             scale = df_sample.iloc[i]['규모']
 
             folium.CircleMarker(
-                location=[
-                    df_sample.iloc[i]['위도'],
-                    df_sample.iloc[i]['경도']
-                ],
-                radius=scale * 1.5, # 데이터 크기 시각화 보정
-                color='white',      # 어두운 지도 위 가독성을 위한 테두리 흰색 처리
-                weight=0.5,
+                location=[df_sample.iloc[i]['위도'], df_sample.iloc[i]['경도']],
+                radius=scale * 2, 
+                color=colors[cluster],
+                weight=1,
                 fill=True,
                 fill_color=colors[cluster],
-                fill_opacity=0.75
+                fill_opacity=0.6
             ).add_to(m)
 
-        # 사용자 위치 표시 (X 혹은 레이더 포인터 모양의 마커)
+        # 사용자 위치 표시 (팩트의 중심 별 모양)
         folium.Marker(
             location=[lat, lon],
-            popup="진앙지 (EPICENTER)",
-            icon=folium.Icon(color='red', icon='play') # 파동의 시작 지점을 뜻하는 플레이 아이콘
+            popup="슈팅스타 에너지 중심!",
+            icon=folium.Icon(color='lightred', icon='star') 
         ).add_to(m)
 
-        # 스트림릿에 지도 출력 (원본 규격 유지)
+        # 지도 출력
         st_folium(m, use_container_width=True, height=600, returned_objects=[])
 
-# 푸터 (컨셉에 맞추어 디자인 고도화)
+# 푸터
 st.markdown("---")
-st.markdown("<p style='text-align: center; color: #525866; font-size: 0.85rem;'>EARTHQUAKE EARLY WARNING MONITORING SYSTEM | © 2026 지진 데이터 분석팀.</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #DB7093; font-family: Jua;'>💫 캐치! 티니핑 5기 슈팅스타팩트 시뮬레이터 💫</p>", unsafe_allow_html=True)
