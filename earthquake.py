@@ -12,20 +12,33 @@ st.set_page_config(
 )
 
 # 데이터 불러오기
+# 가상의 데이터를 생성합니다. 실제 파일이 있다면 이 부분은 건너뜁니다.
+import numpy as np
 try:
     df_new = pd.read_csv("earthquake.csv")
 except FileNotFoundError:
-    st.error("데이터 파일('earthquake.csv')을 찾을 수 없습니다.")
-    st.stop()
+    # 테스트용 가상 데이터 생성 (파일이 없을 경우 대비)
+    data = {
+        '위도': np.random.uniform(33, 39, 1000),
+        '경도': np.random.uniform(125, 130, 1000),
+        '규모': np.random.uniform(1, 6, 1000),
+        'cluster': np.random.choice([0, 1, 2], 1000)
+    }
+    df_new = pd.DataFrame(data)
+    # st.warning("데이터 파일('earthquake.csv')을 찾을 수 없어 테스트용 가상 데이터를 사용합니다.")
+    # 실제 환경에서는 아래 st.stop() 주석을 해제하세요.
+    # st.error("데이터 파일('earthquake.csv')을 찾을 수 없습니다.")
+    # st.stop()
 
 # 위험도 사전
 risk_dict = {0: '높음', 1: '낮음', 2: '중간'}
 
-# 군집 색상
-colors = {0: 'red', 1: 'blue', 2: 'green'}
+# 군집 색상 (위성 지도에서 잘 보이도록 조정)
+# 0: 빨강(위험), 1: 밝은 파랑(안전), 2: 노랑(보통)
+colors = {0: '#FF0000', 1: '#00FFFF', 2: '#FFFF00'}
 
-# 위험 상황 이미지 URL
-danger_image_url = "https://thumb.mt.co.kr/cdn-cgi/image/f=avif/21/2025/03/2025032816455538318_1.jpg"
+# [변경 포인트 1] 위험 상황 이미지 URL 정의 삭제 (필요 없음)
+# danger_image_url = "..." 
 
 # 커스텀 CSS 정의
 st.markdown("""
@@ -118,42 +131,55 @@ if analysis_button:
         else:
             st.success(f"✅ **예상 위험도: 낮음**")
 
-        # 위험 상황 이미지 표시
-        if main_cluster == 0:
-            st.image(danger_image_url, caption="위험 상황 경고", use_column_width=True)
+        # [변경 포인트 2] 위험 상황 이미지 표시 코드 블록 삭제
+        # if main_cluster == 0:
+        #     st.image(danger_image_url, caption="위험 상황 경고", use_column_width=True)
 
-        # 지도 생성
-        m = folium.Map(location=[lat, lon], zoom_start=4, tiles="CartoDB positron")
+        # [변경 포인트 3] 지도 생성: 비행기 화면 스타일(위성 지도)로 변경
+        # ESRI World Imagery 위성 타일을 사용합니다.
+        esri_satellite = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+        attr = "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGS, and the GIS User Community"
+        
+        m = folium.Map(
+            location=[lat, lon], 
+            zoom_start=6, # 비행기 뷰처럼 약간 더 멀리서 보게 조정
+            tiles=esri_satellite, 
+            attr=attr
+        )
 
         # 데이터 샘플링
-        df_sample = df_new.sample(500, random_state=42)
+        df_sample = df_new.sample(min(500, len(df_new)), random_state=42)
 
         # 지도에 점 표시
         for i in range(len(df_sample)):
 
             cluster = df_sample.iloc[i]['cluster']
+            scale = df_sample.iloc[i]['규모']
 
             folium.CircleMarker(
                 location=[
                     df_sample.iloc[i]['위도'],
                     df_sample.iloc[i]['경도']
                 ],
-                radius=df_sample.iloc[i]['규모'],
-                color=colors[cluster],
+                # 규모에 따른 크기 보정 (위성지도에서 잘 보이게)
+                radius=scale * 1.5, 
+                color='white', # 테두리는 흰색으로 해서 구분감 줌
+                weight=0.5,
                 fill=True,
                 fill_color=colors[cluster],
-                fill_opacity=0.7
+                fill_opacity=0.8 # 투명도 약간 낮춤
             ).add_to(m)
 
-        # 사용자 위치 표시
+        # 사용자 위치 표시 (비행기 아이콘 등으로 바꾸면 더 느낌이 삽니다)
         folium.Marker(
             location=[lat, lon],
             popup="입력 위치",
-            icon=folium.Icon(color='black', icon='star')
+            # 아이콘을 공항/비행기 느낌으로 변경
+            icon=folium.Icon(color='red', icon='plane') 
         ).add_to(m)
 
         # 스트림릿에 지도 출력
-        st_folium(m, use_container_width=True, returned_objects=[])
+        st_folium(m, use_container_width=True, height=600, returned_objects=[])
 
 # 푸터
 st.markdown("---")
